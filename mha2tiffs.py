@@ -39,7 +39,8 @@ def getMHAImageStack(fn, low_index, upper_index):
                     dims = [int(s) for s in val.split()]
                 elif key == 'ElementType':
                     if val == 'MET_UCHAR':
-                        datatype = np.dtype('b')
+                        # datatype = np.dtype('b')
+                        datatype = np.uint8
                     elif val == 'MET_USHORT':
                         datatype = np.dtype('<H')
                     else:
@@ -118,7 +119,7 @@ if __name__ == '__main__':
 
     infile = namespace.infile
     root, ext = os.path.splitext(infile)
-    fout = root + '_s{}.tiff'
+    fout = root + '_s{}.tif'
     low_index = namespace.low
     upper_index = namespace.up
     istack = getMHAImageStack(infile, low_index, upper_index)
