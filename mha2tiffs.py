@@ -40,7 +40,7 @@ def getMHAImageStack(fn, low_index, upper_index):
                 elif key == 'ElementType':
                     if val == 'MET_UCHAR':
                         # datatype = np.dtype('b')
-                        datatype = np.uint8
+                        datatype = np.dtype(np.uint8)
                     elif val == 'MET_USHORT':
                         datatype = np.dtype('<H')
                     else:
@@ -111,6 +111,8 @@ if __name__ == '__main__':
                     description=CMD_DESCRIPTION)
     parser.add_argument('infile', type=str,
                        help='the input Metaimage file (*.mha)')
+    parser.add_argument('indexdigits', type=int,
+                       help='the number of digits in the filename suffix of the image stack')
     parser.add_argument('-L', '--low', type=int, default=0,
                     help='lower slice index to extract. default is 0.')
     parser.add_argument('-U', '--up', type=int, default=None,
@@ -118,8 +120,9 @@ if __name__ == '__main__':
     namespace = parser.parse_args()
 
     infile = namespace.infile
+    index_digits = namespace.indexdigits
     root, ext = os.path.splitext(infile)
-    fout = root + '_s{}.tif'
+    fout = root + '_{:0%d}.tif' % (index_digits)
     low_index = namespace.low
     upper_index = namespace.up
     istack = getMHAImageStack(infile, low_index, upper_index)
