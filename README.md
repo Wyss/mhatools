@@ -9,8 +9,8 @@ derived tools.
 
 ## Python Dependencies
 
-numpy
-tifffile
+- numpy
+- tifffile
 
 
 

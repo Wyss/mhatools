@@ -1,6 +1,6 @@
 import numpy as np
 import tifffile as tf
-import gzip
+import zlib
 
 LINE_CHECK_LIMIT = 100 # scan up to 100 lines
 
@@ -78,7 +78,6 @@ def getMHAImageStack(fn, low_index, upper_index):
             out_shape = (dims[2], dims[1], dims[0]) # Z axis first
             buf = fd.read(data_size)
             if is_compressed:
-                import zlib
                 # zlib wbits
                 buf = zlib.decompress(buf, 15 + 32)
             image_stack_read = np.frombuffer(buf, dtype=datatype)
