@@ -1,4 +1,4 @@
-Maintainer
+Maintainer:
 Nick Conway <nick.conway@wyss.harvard.edu>
 
-Contributors
+Contributors:
