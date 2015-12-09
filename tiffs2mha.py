@@ -19,6 +19,22 @@ ElementType = {datatype}
 ElementDataFile = LOCAL
 """
 
+HEADER_COMP = """ObjectType = Image
+NDims = 3
+BinaryData = True
+BinaryDataByteOrderMSB = False
+CompressedData = {is_compressed}
+CompressedDataSize = {compressed_size}
+TransformMatrix = 1 0 0 0 1 0 0 0 1
+Offset = 0 0 0
+CenterOfRotation = 0 0 0
+AnatomicalOrientation = RAI
+ElementSpacing = {x_spacing} {y_spacing} {z_spacing}
+DimSize = {image_x_resolution} {image_y_resolution} {stack_size}
+ElementType = {datatype}
+ElementDataFile = LOCAL
+"""
+
 def stackImages(in_path,
                 in_prefix, index_digits,
                 low_index=0,
@@ -77,7 +93,8 @@ def stackImages(in_path,
         if shape is None:
             shape = image.shape
             datasize = shape[0]*shape[1]
-        image_list.append(image.reshape((datasize,)))
+        # image_list.append(image.reshape((datasize,)))
+        image_list.append(image)
     print("size of image_stack", len(image_list))
     datatype = image.dtype
     if image.dtype.itemsize == 2:
@@ -100,24 +117,22 @@ def writeMHA(out_file, image_list, header_info, spacing_mm, is_compressed):
     header_info['x_spacing'] = spacing_mm[0]
     header_info['y_spacing'] = spacing_mm[1]
     header_info['z_spacing'] = spacing_mm[2]
-    header = HEADER.format(**header_info)
 
-    image_stack = np.hstack(image_list)
-    shape = image_stack.shape
-    datasize = shape[0]
-    # print("im dtype", image_stack.dtype)
-    # image_stack = image_stack.reshape((datasize,))
-    # image_stack = np.copy(image_stack, 'C')
+    image_stack = np.vstack(image_list)
+    if sys.version_info[0] > 2:
+        buf = memoryview(image_stack)
+    else:
+        buf = np.getbuffer(image_stack)
+    if is_compressed:
+        print("compressing")
+        buf = zlib.compress(buf)
+        header_info['compressed_size'] = len(buf)
+        header = HEADER_COMP.format(**header_info)
+    else:
+        header = HEADER.format(**header_info)
+
     with open(out_file, 'wb') as fd:
-        # print(header.encode('utf-8'))
         fd.write(header.encode('utf-8'))
-        if sys.version_info[0] > 2:
-            buf = memoryview(image_stack).tobytes()
-        else:
-            buf = np.getbuffer(image_stack)
-        if is_compressed:
-            print("compressing")
-            buf = zlib.compress(buf)
         n = fd.write(buf)
         print("wrote", n , len(buf))
 # end def
@@ -160,7 +175,8 @@ if __name__ == '__main__':
     parser.add_argument('-U', '--up', type=int, default=None,
         help='upper slice index to extract. default is the Z dimension of DimSize.')
     parser.add_argument('-s', '--spacing', nargs=3,
-        default=(0.0065/40, 0.0065/40, .1),
+        default=(0.0065/40, 0.0065/40, 0.0001),
+        # default=(0.296524,0.296524, 1),
         metavar=('x', 'y', 'z'),
         help='physical pixel spacing in x, y, z in mm')
     namespace = parser.parse_args()
