@@ -63,9 +63,9 @@ def stackImages(in_path,
         upper_index = max_seen + 1
     # end if
 
-    if upper_index < 0:
+    if upper_index <= 0:
         raise IndexError(
-            "negative upper_index not allowed, {}".format(upper_index))
+            "zero or negative upper_index not allowed, {}".format(upper_index))
 
     if low_index < 0:
         raise IndexError(
@@ -93,7 +93,6 @@ def stackImages(in_path,
         if shape is None:
             shape = image.shape
             datasize = shape[0]*shape[1]
-        # image_list.append(image.reshape((datasize,)))
         image_list.append(image)
     print("size of image_stack", len(image_list))
     datatype = image.dtype
@@ -103,9 +102,10 @@ def stackImages(in_path,
         datatype = 'MET_UCHAR'
     else:
         raise ValueError("Unsupported bit depth")
-    image_x_resolution, image_y_resolution = image.shape
-    header_info['image_x_resolution'] = image_x_resolution
-    header_info['image_y_resolution'] = image_y_resolution
+    num_rows, num_columns = image.shape
+    print("the shape", image.shape)
+    header_info['image_x_resolution'] = num_columns
+    header_info['image_y_resolution'] = num_rows
     header_info['datatype'] = datatype
     header_info['stack_size'] = upper_index - low_index
 
@@ -175,10 +175,12 @@ if __name__ == '__main__':
     parser.add_argument('-U', '--up', type=int, default=None,
         help='upper slice index to extract. default is the Z dimension of DimSize.')
     parser.add_argument('-s', '--spacing', nargs=3,
-        default=(0.0065/40, 0.0065/40, 0.0001),
+        default=(6.5/40, 6.5/40, 0.505),
         # default=(0.296524,0.296524, 1),
         metavar=('x', 'y', 'z'),
         help='physical pixel spacing in x, y, z in mm')
+    parser.add_argument('-e', '--ext', type=str, default='.tif',
+                    help='File extension for TIFF beginning with a \'.\'')
     namespace = parser.parse_args()
 
     in_path = namespace.inpath
@@ -191,7 +193,8 @@ if __name__ == '__main__':
     spacing_mm = namespace.spacing
 
     image_list, header_info = stackImages(in_path, prefix, index_digits,
-                                low_index=low_index, upper_index=upper_index)
+                                low_index=low_index, upper_index=upper_index,
+                                tiff_ext=namespace.ext)
     print("found stack_size:", header_info['stack_size'])
     writeMHA(out_file, image_list, header_info, spacing_mm, is_compressed)
     print('wrote %s' % (out_file))
